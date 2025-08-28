@@ -2,21 +2,23 @@
 
 :root {
   /* Brand Colors */
-  --bg-dark: #0B0B0C;
+  --bg-dark: #0b0b0c;
   --surface: #121315;
-  --primary-gold: #C9A227;
-  --accent-crimson: #D14B4B;
-  --text-strong: #ECEEF1;
-  --text-muted: #B5B8BE;
-  
+  --primary-gold: #c9a227;
+  --accent-crimson: #d14b4b;
+  --text-strong: #eceef1;
+  --text-muted: #b5b8be;
+
   /* Film Effects */
   --film-grain-opacity: 0.03;
   --vignette-opacity: 0.1;
   --letterbox-height: 2rem;
-  
+
   /* Typography */
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas,
+    "Courier New", monospace;
 }
 
 /* DaisyUI Override - Cinema Color Scheme */
@@ -31,7 +33,7 @@
   --fallback-nc: var(--text-strong);
   --fallback-b1: var(--bg-dark);
   --fallback-b2: var(--surface);
-  --fallback-b3: #1A1B1D;
+  --fallback-b3: #1a1b1d;
   --fallback-bc: var(--text-strong);
 }
 
@@ -60,16 +62,33 @@ body {
 
 /* Film Grain Overlay */
 .film-grain::before {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   opacity: var(--film-grain-opacity);
-  background-image: 
-    radial-gradient(circle at 20% 50%, transparent 20%, rgba(255,255,255,0.3) 21%, rgba(255,255,255,0.3) 34%, transparent 35%, transparent),
-    linear-gradient(0deg, transparent 24%, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,0.05) 75%, rgba(255,255,255,0.05) 76%, transparent 77%, transparent);
+  background-image: radial-gradient(
+      circle at 20% 50%,
+      transparent 20%,
+      rgba(255, 255, 255, 0.3) 21%,
+      rgba(255, 255, 255, 0.3) 34%,
+      transparent 35%,
+      transparent
+    ),
+    linear-gradient(
+      0deg,
+      transparent 24%,
+      rgba(255, 255, 255, 0.05) 25%,
+      rgba(255, 255, 255, 0.05) 26%,
+      transparent 27%,
+      transparent 74%,
+      rgba(255, 255, 255, 0.05) 75%,
+      rgba(255, 255, 255, 0.05) 76%,
+      transparent 77%,
+      transparent
+    );
   background-size: 3px 3px;
   pointer-events: none;
   z-index: 1;
@@ -77,7 +96,7 @@ body {
 
 /* Vignette Effect */
 .vignette::after {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
@@ -87,7 +106,7 @@ body {
     ellipse at center,
     transparent 0%,
     transparent 65%,
-    rgba(0,0,0,var(--vignette-opacity)) 100%
+    rgba(0, 0, 0, var(--vignette-opacity)) 100%
   );
   pointer-events: none;
   z-index: 2;
@@ -101,15 +120,16 @@ body {
 }
 
 .film-border::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -1px;
   left: -1px;
   right: -1px;
   bottom: -1px;
-  background: linear-gradient(45deg, 
-    rgba(201, 162, 39, 0.1) 0%, 
-    transparent 50%, 
+  background: linear-gradient(
+    45deg,
+    rgba(201, 162, 39, 0.1) 0%,
+    transparent 50%,
     rgba(201, 162, 39, 0.1) 100%
   );
   border-radius: inherit;
@@ -117,7 +137,12 @@ body {
 }
 
 /* Typography Overrides */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-display);
   font-weight: 700;
   color: var(--text-strong);
@@ -174,8 +199,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary:hover {
-  background: #B8911F;
-  border-color: #B8911F;
+  background: #b8911f;
+  border-color: #b8911f;
 }
 
 .btn-ghost {
@@ -195,13 +220,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Input Styling */
-.input, .textarea, .select {
+.input,
+.textarea,
+.select {
   background: var(--surface);
   border-color: rgba(181, 184, 190, 0.2);
   color: var(--text-strong);
 }
 
-.input:focus, .textarea:focus, .select:focus {
+.input:focus,
+.textarea:focus,
+.select:focus {
   border-color: var(--primary-gold);
   outline: none;
   box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.2);
@@ -235,14 +264,14 @@ h1, h2, h3, h4, h5, h6 {
 
 .badge-success {
   background: rgba(34, 197, 94, 0.2);
-  color: #4ADE80;
-  border-color: #4ADE80;
+  color: #4ade80;
+  border-color: #4ade80;
 }
 
 .badge-warning {
   background: rgba(251, 146, 60, 0.2);
-  color: #FB923C;
-  border-color: #FB923C;
+  color: #fb923c;
+  border-color: #fb923c;
 }
 
 .badge-error {
@@ -282,28 +311,121 @@ h1, h2, h3, h4, h5, h6 {
   );
 }
 
-/* Mobile Responsiveness */
+/* Mobile Responsiveness & Native App Feel */
 @media (max-width: 768px) {
   .hero-section {
     padding: 1rem 0;
   }
-  
+
   .container {
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  
+
   .film-border {
     border-radius: 0.125rem;
   }
-  
+
   /* Reduce film effects on mobile for performance */
   .film-grain::before {
     opacity: calc(var(--film-grain-opacity) * 0.5);
   }
-  
+
   .vignette::after {
     opacity: calc(var(--vignette-opacity) * 0.7);
+  }
+
+  /* Native app styling */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* Full-screen sections */
+  main {
+    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 80px);
+  }
+
+  /* Touch-friendly button sizing */
+  .btn {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  .btn-xs {
+    min-height: 36px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Native-style inputs */
+  .input,
+  .textarea,
+  .select {
+    border-radius: 0.5rem;
+    border-width: 1px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Pull-to-refresh prevention */
+  html {
+    overscroll-behavior: contain;
+  }
+
+  /* Smooth scrolling */
+  * {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hide browser UI elements */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* iOS specific styles */
+@supports (-webkit-touch-callout: none) {
+  .header {
+    padding-top: max(env(safe-area-inset-top), 1rem);
+  }
+
+  /* Disable text selection and callouts for app-like feel */
+  .btn,
+  .tab,
+  .badge {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* iOS-style tap highlights */
+  * {
+    -webkit-tap-highlight-color: rgba(201, 162, 39, 0.1);
+  }
+}
+
+/* Android specific styles */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  .container {
+    max-width: 100%;
+    padding: 0 0.75rem;
+  }
+
+  /* Android-style ripple effect */
+  .btn:active,
+  .tab:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
   }
 }
 
@@ -326,7 +448,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Smooth Transitions */
 * {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* Loading Animation for HTMX */

@@ -1,10 +1,11 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="max-w-xl mx-auto">
   <div class="bg-cinema-surface film-border rounded-xl p-6">
     <h2 class="text-2xl font-bold text-cinema-gold">Error {{ status_code }}</h2>
     <p class="mt-2 opacity-80">{{ detail or 'Something went wrong.' }}</p>
-    <div class="mt-4 text-sm mono opacity-70">Path: <code>{{ path }}</code></div>
+    <div class="mt-4 text-sm mono opacity-70">
+      Path: <code>{{ path }}</code>
+    </div>
     <div class="mt-6 flex gap-2">
       <a href="/" class="btn btn-primary">Go Home</a>
     </div>

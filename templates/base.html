@@ -2,8 +2,29 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <title>{{ page_title or 'pre prd' }}</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="pre prd" />
+    <meta name="description" content="Plan like film. Ship like indie. Transform ideas into artifacts with cinema-grade precision." />
+    <meta name="theme-color" content="#c9a227" />
+    <meta name="background-color" content="#0b0b0c" />
+    
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="pre prd" />
+    <link rel="apple-touch-icon" href="/assets/favicon.svg" />
+    <link rel="apple-touch-startup-image" href="/assets/favicon.svg" />
+    
+    <!-- Android Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/assets/manifest.json" />
+    
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -79,10 +100,23 @@
 
     <main class="container mx-auto p-4">{% block content %}{% endblock %}</main>
 
-    {% block scripts %}{% endblock %}
-    <script>
-      (function () {
-        const STORAGE_KEY = "specstudio_project_v1";
+         {% block scripts %}{% endblock %}
+     <script>
+       // Register Service Worker for PWA
+       if ('serviceWorker' in navigator) {
+         window.addEventListener('load', () => {
+           navigator.serviceWorker.register('/assets/sw.js')
+             .then((registration) => {
+               console.log('SW registered: ', registration);
+             })
+             .catch((registrationError) => {
+               console.log('SW registration failed: ', registrationError);
+             });
+         });
+       }
+
+       (function () {
+         const STORAGE_KEY = "preprd_project_v1";
 
         function getForm() {
           return document.getElementById("panel-form");
