@@ -98,8 +98,32 @@ SCENES_DEFAULT = [
 ]
 
 SHOTS_DEFAULT = [
-    {"id": "T1", "epic_id": "E1", "title": "Build items table", "status": "todo", "priority": "high"},
-    {"id": "T2", "epic_id": "E1", "title": "CRUD handlers", "status": "in-progress", "priority": "high"},
+    {
+        "id": "T1",
+        "epic_id": "E1",
+        "title": "Build items table",
+        "status": "todo",  # todo | doing | done
+        "priority": "P1",  # P1 | P2 | P3
+        "description": "Design schema and create initial migrations.",
+        "checklist": [
+            {"text": "Create table with constraints", "tag": "positive"},
+            {"text": "Handle NULL edge cases", "tag": "negative"},
+            {"text": "Detect unique constraint errors", "tag": "error"},
+        ],
+    },
+    {
+        "id": "T2",
+        "epic_id": "E1",
+        "title": "CRUD handlers",
+        "status": "doing",
+        "priority": "P1",
+        "description": "Implement FastAPI handlers for CRUD.",
+        "checklist": [
+            {"text": "Create endpoints", "tag": "positive"},
+            {"text": "Validate bad inputs", "tag": "negative"},
+            {"text": "Return 4xx/5xx properly", "tag": "error"},
+        ],
+    },
 ]
 
 
@@ -177,27 +201,124 @@ async def panel(request: Request) -> HTMLResponse:
                     next_index = max(int(s["id"].lstrip("T")) for s in shots_data) + 1
                 except Exception:
                     next_index = len(shots_data) + 1
-            new_shot = {"id": f"T{next_index}", "epic_id": "E1", "title": "New Shot", "status": "todo", "priority": "medium"}
+            new_shot = {
+                "id": f"T{next_index}",
+                "epic_id": "E1",
+                "title": "New Shot",
+                "status": "todo",
+                "priority": "P2",
+                "description": "",
+                "checklist": [],
+            }
             shots_data.append(new_shot)
             editing_shot = new_shot
         elif op == "edit":
             shot_id = request.query_params.get("id")
             editing_shot = next((s for s in shots_data if s.get("id") == shot_id), None)
+        elif op == "add_check":
+            # Build an editing_shot from current form values and append an empty checklist row
+            target_id = request.query_params.get("id")
+            # pull current values (not yet saved) from the form
+            base = {
+                "id": form.get("shot_id") or target_id or "",
+                "epic_id": form.get("shot_epic_id") or "E1",
+                "title": form.get("shot_title") or "Untitled",
+                "status": form.get("shot_status") or "todo",
+                "priority": form.get("shot_priority") or "P2",
+                "description": form.get("shot_description") or "",
+            }
+            texts = form.getlist("shot_check_text") if hasattr(form, "getlist") else []
+            tags = form.getlist("shot_check_tag") if hasattr(form, "getlist") else []
+            checklist = []
+            for i in range(max(len(texts), len(tags))):
+                text = texts[i] if i < len(texts) else ""
+                tag = tags[i] if i < len(tags) else "positive"
+                checklist.append({"text": text, "tag": tag})
+            checklist.append({"text": "", "tag": "positive"})
+            base["checklist"] = checklist
+            editing_shot = base
+        elif op == "remove_check":
+            target_id = request.query_params.get("id")
+            idx_str = request.query_params.get("idx")
+            try:
+                idx = int(idx_str)
+            except Exception:
+                idx = -1
+            base = {
+                "id": form.get("shot_id") or target_id or "",
+                "epic_id": form.get("shot_epic_id") or "E1",
+                "title": form.get("shot_title") or "Untitled",
+                "status": form.get("shot_status") or "todo",
+                "priority": form.get("shot_priority") or "P2",
+                "description": form.get("shot_description") or "",
+            }
+            texts = form.getlist("shot_check_text") if hasattr(form, "getlist") else []
+            tags = form.getlist("shot_check_tag") if hasattr(form, "getlist") else []
+            checklist = []
+            for i in range(max(len(texts), len(tags))):
+                if i == idx:
+                    continue
+                text = texts[i] if i < len(texts) else ""
+                tag = tags[i] if i < len(tags) else "positive"
+                checklist.append({"text": text, "tag": tag})
+            base["checklist"] = checklist
+            editing_shot = base
         elif op == "save":
             original_id = form.get("shot_original_id") or form.get("shot_id")
             shot_id = form.get("shot_id")
             epic_id = form.get("shot_epic_id") or "E1"
             title = form.get("shot_title") or "Untitled"
-            status = form.get("shot_status") or "todo"
-            priority = form.get("shot_priority") or "medium"
+            status = (form.get("shot_status") or "todo").lower()
+            if status not in {"todo", "doing", "done"}:
+                status = "todo"
+            priority = form.get("shot_priority") or "P2"
+            if priority not in {"P1", "P2", "P3"}:
+                priority = "P2"
+            description = form.get("shot_description") or ""
+            texts = form.getlist("shot_check_text") if hasattr(form, "getlist") else []
+            tags = form.getlist("shot_check_tag") if hasattr(form, "getlist") else []
+            checklist = []
+            for i in range(max(len(texts), len(tags))):
+                text = texts[i] if i < len(texts) else ""
+                tag = tags[i] if i < len(tags) else "positive"
+                if not text and not tag:
+                    continue
+                if tag not in {"positive", "negative", "error"}:
+                    tag = "positive"
+                checklist.append({"text": text, "tag": tag})
             updated = False
             for s in shots_data:
                 if s.get("id") == original_id:
-                    s.update({"id": shot_id, "epic_id": epic_id, "title": title, "status": status, "priority": priority})
+                    s.update({
+                        "id": shot_id,
+                        "epic_id": epic_id,
+                        "title": title,
+                        "status": status,
+                        "priority": priority,
+                        "description": description,
+                        "checklist": checklist,
+                    })
                     updated = True
                     break
             if not updated:
-                shots_data.append({"id": shot_id, "epic_id": epic_id, "title": title, "status": status, "priority": priority})
+                shots_data.append({
+                    "id": shot_id,
+                    "epic_id": epic_id,
+                    "title": title,
+                    "status": status,
+                    "priority": priority,
+                    "description": description,
+                    "checklist": checklist,
+                })
+        elif op == "update_status":
+            shot_id = request.query_params.get("id")
+            new_status = (form.get("status") or "todo").lower()
+            if new_status not in {"todo", "doing", "done"}:
+                new_status = "todo"
+            for s in shots_data:
+                if s.get("id") == shot_id:
+                    s["status"] = new_status
+                    break
         elif op == "delete":
             shot_id = request.query_params.get("id")
             shots_data = [s for s in shots_data if s.get("id") != shot_id]

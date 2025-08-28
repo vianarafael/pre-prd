@@ -100,7 +100,7 @@
         </div>
         <div class="flex gap-2">
           <button
-            class="btn btn-outline"
+            class="btn btn-outline btn-xs"
             hx-post="/panel?tab=scenes&op=edit&id={{ scene.id }}"
             hx-target="#panel"
             hx-swap="innerHTML"
@@ -109,7 +109,7 @@
             Edit
           </button>
           <button
-            class="btn btn-outline btn-error"
+            class="btn btn-outline btn-error btn-xs"
             hx-post="/panel?tab=scenes&op=delete&id={{ scene.id }}"
             hx-target="#panel"
             hx-swap="innerHTML"
@@ -140,36 +140,91 @@
     {% for shot in shots_data %}
     <div class="bg-card/70 rounded-lg p-4 border {{ 'border-secondary/30' if editing_shot and editing_shot.id == shot.id else 'border-primary/20' }}">
       {% if editing_shot and editing_shot.id == shot.id %}
-      <div class="grid md:grid-cols-3 gap-3">
+      <div class="space-y-3">
         <input type="hidden" name="shot_original_id" value="{{ editing_shot.id }}" />
-        <input name="shot_id" value="{{ editing_shot.id }}" class="input input-bordered w-full" />
-        <input name="shot_epic_id" value="{{ editing_shot.epic_id }}" class="input input-bordered w-full" placeholder="Epic (E1)" />
-        <select name="shot_status" class="select select-bordered w-full">
-          {% for s in ['todo','in-progress','review','done'] %}
-          <option value="{{ s }}" {% if editing_shot.status == s %}selected{% endif %}>{{ s }}</option>
-          {% endfor %}
-        </select>
-        <input name="shot_title" value="{{ editing_shot.title }}" class="input input-bordered md:col-span-2 w-full" placeholder="Title" />
-        <select name="shot_priority" class="select select-bordered w-full">
-          {% for p in ['low','medium','high','critical'] %}
-          <option value="{{ p }}" {% if editing_shot.priority == p %}selected{% endif %}>{{ p }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="mt-3 flex gap-2 justify-end">
-        <button class="btn" hx-post="/panel?tab=shots&op=save" hx-target="#panel" hx-include="#panel form" hx-swap="innerHTML">Save</button>
-        <button class="btn btn-ghost" hx-post="/panel?tab=shots" hx-target="#panel" hx-include="#panel form" hx-swap="innerHTML">Cancel</button>
+        <div class="grid md:grid-cols-3 gap-3">
+          <input name="shot_id" value="{{ editing_shot.id }}" class="input input-bordered w-full" />
+          <input name="shot_epic_id" value="{{ editing_shot.epic_id }}" class="input input-bordered w-full" placeholder="Epic (E1)" />
+          <input name="shot_title" value="{{ editing_shot.title }}" class="input input-bordered md:col-span-2 w-full" placeholder="Title" />
+          <select name="shot_status" class="select select-bordered w-full">
+            {% for s in ['todo','doing','done'] %}
+            <option value="{{ s }}" {% if editing_shot.status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+          <select name="shot_priority" class="select select-bordered w-full">
+            {% for p in ['P1','P2','P3'] %}
+            <option value="{{ p }}" {% if editing_shot.priority == p %}selected{% endif %}>{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="label"><span class="label-text">Description</span></label>
+          <textarea name="shot_description" class="textarea textarea-bordered w-full" rows="3" placeholder="A few lines of text...">{{ editing_shot.description or '' }}</textarea>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold">Checklist</span>
+            <button class="btn btn-sm" hx-post="/panel?tab=shots&op=add_check&id={{ editing_shot.id }}" hx-target="#panel" hx-include="#panel form" hx-swap="innerHTML">Add item</button>
+          </div>
+          <div class="space-y-2">
+            {% set items = editing_shot.checklist or [] %}
+            {% for item in items %}
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <input class="col-span-8 input input-bordered" name="shot_check_text" value="{{ item.text }}" placeholder="Acceptance criterion" />
+              <select class="col-span-3 select select-bordered" name="shot_check_tag">
+                {% for t in ['positive','negative','error'] %}
+                <option value="{{ t }}" {% if item.tag == t %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+              </select>
+              <button class="col-span-1 btn btn-outline btn-error" title="Remove" hx-post="/panel?tab=shots&op=remove_check&id={{ editing_shot.id }}&idx={{ loop.index0 }}" hx-target="#panel" hx-include="#panel form" hx-swap="innerHTML">×</button>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="mt-3 flex gap-2 justify-end">
+          <button class="btn" hx-post="/panel?tab=shots&op=save" hx-target="#panel" hx-include="#panel form" hx-swap="innerHTML">Save</button>
+          <button class="btn btn-ghost" hx-post="/panel?tab=shots" hx-target="#panel" hx-include="#panel form" hx-swap="innerHTML">Cancel</button>
+        </div>
       </div>
       {% else %}
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="font-semibold">{{ shot.id }} — {{ shot.title }}</div>
-          <div class="text-sm opacity-80">Epic: {{ shot.epic_id }} • Status: {{ shot.status }} • Priority: {{ shot.priority }}</div>
+      <!-- Compact read card -->
+      <div class="space-y-2">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="font-semibold truncate">{{ shot.title }}</div>
+            <div class="text-xs opacity-80 truncate">Epic {{ shot.epic_id }} •
+              <span class="inline-flex items-center gap-1">
+                Status:
+                <form hx-post="/panel?tab=shots&op=update_status&id={{ shot.id }}" hx-target="#panel" hx-include="#panel form" class="inline">
+                  <select name="status" class="select select-xs select-bordered align-middle">
+                    {% for s in ['todo','doing','done'] %}
+                    <option value="{{ s }}" {% if shot.status == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                  </select>
+                </form>
+              </span>
+              • Priority:
+              <span class="badge badge-outline">{{ shot.priority }}</span>
+            </div>
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <button class="btn btn-outline btn-xs" hx-post="/panel?tab=shots&op=edit&id={{ shot.id }}" hx-target="#panel" hx-swap="innerHTML" hx-include="#panel form">Edit</button>
+            <button class="btn btn-outline btn-error btn-xs" hx-post="/panel?tab=shots&op=delete&id={{ shot.id }}" hx-target="#panel" hx-swap="innerHTML" hx-include="#panel form">Delete</button>
+          </div>
         </div>
-        <div class="flex gap-2">
-          <button class="btn btn-outline" hx-post="/panel?tab=shots&op=edit&id={{ shot.id }}" hx-target="#panel" hx-swap="innerHTML" hx-include="#panel form">Edit</button>
-          <button class="btn btn-outline btn-error" hx-post="/panel?tab=shots&op=delete&id={{ shot.id }}" hx-target="#panel" hx-swap="innerHTML" hx-include="#panel form">Delete</button>
+        {% if shot.description %}
+        <div class="text-sm opacity-90 line-clamp-3">{{ shot.description }}</div>
+        {% endif %}
+        {% if shot.checklist %}
+        <div class="flex flex-wrap gap-2">
+          {% for item in shot.checklist %}
+          <span class="badge {{ 'badge-success' if item.tag == 'positive' else ('badge-warning' if item.tag == 'negative' else 'badge-error') }} badge-outline">{{ item.text }}</span>
+          {% endfor %}
         </div>
+        {% endif %}
       </div>
       {% endif %}
     </div>
