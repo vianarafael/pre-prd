@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ page_title or 'SpecStudio' }}</title>
+    <title>{{ page_title or 'pre prd' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link
@@ -21,12 +21,12 @@
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
     {% block head %}{% endblock %}
   </head>
-  <body class="min-h-screen bg-background text-foreground film-grain">
+  <body class="min-h-screen film-grain vignette">
     <header
-      class="border-b border-primary/20 bg-card/50 backdrop-blur-sm relative"
+      class="header relative"
     >
       <div
-        class="absolute top-0 left-0 w-full h-1 clapperboard-stripes opacity-60"
+        class="absolute top-0 left-0 w-full clapperboard-stripes opacity-60"
       ></div>
       <div
         class="container mx-auto px-4 py-4 flex items-center justify-between"
@@ -34,21 +34,21 @@
         <div class="flex items-center gap-3">
           <div class="relative">
             <span class="inline-block w-8 h-8">
-              <img src="/assets/favicon.svg" alt="SpecStudio" class="w-8 h-8" />
+              <img src="/assets/favicon.svg" alt="pre prd" class="w-8 h-8" />
             </span>
           </div>
           <div>
             <h1
-              class="text-2xl font-bold text-primary"
-              style="font-family: var(--font-display, Inter)"
+              class="text-2xl font-bold text-cinema-gold"
             >
-              SpecStudio
+              pre prd
             </h1>
+            <div class="text-xs mono text-cinema-gold opacity-60">Plan like film. Ship like indie.</div>
           </div>
         </div>
         <div class="flex items-center gap-2">
           <button
-            class="btn btn-ghost border border-primary/30"
+            class="btn btn-ghost"
             type="submit"
             form="panel-form"
             formaction="/export"
@@ -58,21 +58,21 @@
           </button>
           <button
             id="btn-share"
-            class="btn btn-ghost border border-primary/30"
+            class="btn btn-ghost"
             type="button"
           >
             Share
           </button>
           <button
             id="btn-export-json"
-            class="btn btn-ghost border border-primary/30"
+            class="btn btn-ghost"
             type="button"
           >
             Export JSON
           </button>
           <label
             for="import-file"
-            class="btn btn-ghost border border-primary/30 cursor-pointer"
+            class="btn btn-ghost cursor-pointer"
             >Import JSON</label
           >
           <input

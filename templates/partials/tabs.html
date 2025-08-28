@@ -1,5 +1,5 @@
 <!-- prettier-ignore -->
-<div id="tabs" class="tabs tabs-boxed mt-3 border border-primary/30" {% if oob %}hx-swap-oob="true"{% endif %}>
+<div id="tabs" class="tabs tabs-boxed mt-3" {% if oob %}hx-swap-oob="true"{% endif %}>
   <button
     class="tab relative {{ 'tab-active' if tab == 'script' else '' }}"
     hx-post="/panel?tab=script"
@@ -8,7 +8,7 @@
     hx-include="#panel form"
   >
     Script
-    <span class="absolute -top-8 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full border border-primary/30 bg-card/80 whitespace-nowrap">docs/PRD.md</span>
+    <span class="absolute -top-8 left-1/2 -translate-x-1/2 text-xs mono px-2 py-0.5 rounded border-cinema bg-cinema-surface whitespace-nowrap">docs/PRD.md</span>
   </button>
   <button
     class="tab relative {{ 'tab-active' if tab == 'rules' else '' }}"
@@ -18,7 +18,7 @@
     hx-include="#panel form"
   >
     Rules
-    <span class="absolute -top-8 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full border border-primary/30 bg-card/80 whitespace-nowrap">.cursor/rules/</span>
+    <span class="absolute -top-8 left-1/2 -translate-x-1/2 text-xs mono px-2 py-0.5 rounded border-cinema bg-cinema-surface whitespace-nowrap">.cursor/rules/</span>
   </button>
   <button
     class="tab relative {{ 'tab-active' if tab == 'scenes' else '' }}"
@@ -28,7 +28,7 @@
     hx-include="#panel form"
   >
     Scenes
-    <span class="absolute -top-8 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full border border-primary/30 bg-card/80 whitespace-nowrap">epics.json</span>
+    <span class="absolute -top-8 left-1/2 -translate-x-1/2 text-xs mono px-2 py-0.5 rounded border-cinema bg-cinema-surface whitespace-nowrap">epics.json</span>
   </button>
   <button
     class="tab relative {{ 'tab-active' if tab == 'shots' else '' }}"
@@ -38,6 +38,6 @@
     hx-include="#panel form"
   >
     Shots
-    <span class="absolute -top-8 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full border border-primary/30 bg-card/80 whitespace-nowrap">tickets.json</span>
+    <span class="absolute -top-8 left-1/2 -translate-x-1/2 text-xs mono px-2 py-0.5 rounded border-cinema bg-cinema-surface whitespace-nowrap">tickets.json</span>
   </button>
 </div>

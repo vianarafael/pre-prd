@@ -1,0 +1,345 @@
+/* Cinema-themed global styles for pre prd */
+
+:root {
+  /* Brand Colors */
+  --bg-dark: #0B0B0C;
+  --surface: #121315;
+  --primary-gold: #C9A227;
+  --accent-crimson: #D14B4B;
+  --text-strong: #ECEEF1;
+  --text-muted: #B5B8BE;
+  
+  /* Film Effects */
+  --film-grain-opacity: 0.03;
+  --vignette-opacity: 0.1;
+  --letterbox-height: 2rem;
+  
+  /* Typography */
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+/* DaisyUI Override - Cinema Color Scheme */
+[data-theme="dark"] {
+  --fallback-p: var(--primary-gold);
+  --fallback-pc: var(--bg-dark);
+  --fallback-s: var(--accent-crimson);
+  --fallback-sc: var(--text-strong);
+  --fallback-a: var(--primary-gold);
+  --fallback-ac: var(--bg-dark);
+  --fallback-n: var(--surface);
+  --fallback-nc: var(--text-strong);
+  --fallback-b1: var(--bg-dark);
+  --fallback-b2: var(--surface);
+  --fallback-b3: #1A1B1D;
+  --fallback-bc: var(--text-strong);
+}
+
+/* Base Layout - Letterbox Effect */
+html {
+  background: var(--bg-dark);
+  min-height: 100vh;
+}
+
+body {
+  background: var(--bg-dark);
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  line-height: 1.6;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Letterbox padding on larger screens */
+@media (min-width: 1024px) {
+  body {
+    padding-top: var(--letterbox-height);
+    padding-bottom: var(--letterbox-height);
+  }
+}
+
+/* Film Grain Overlay */
+.film-grain::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: var(--film-grain-opacity);
+  background-image: 
+    radial-gradient(circle at 20% 50%, transparent 20%, rgba(255,255,255,0.3) 21%, rgba(255,255,255,0.3) 34%, transparent 35%, transparent),
+    linear-gradient(0deg, transparent 24%, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,0.05) 75%, rgba(255,255,255,0.05) 76%, transparent 77%, transparent);
+  background-size: 3px 3px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Vignette Effect */
+.vignette::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 65%,
+    rgba(0,0,0,var(--vignette-opacity)) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Film Frame Borders */
+.film-border {
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: 0.25rem;
+  position: relative;
+}
+
+.film-border::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  background: linear-gradient(45deg, 
+    rgba(201, 162, 39, 0.1) 0%, 
+    transparent 50%, 
+    rgba(201, 162, 39, 0.1) 100%
+  );
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* Typography Overrides */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Hero Section */
+.hero-section {
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.hero-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  color: var(--primary-gold);
+  margin-bottom: 0.5rem;
+  line-height: 1.1;
+}
+
+.hero-tagline {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+/* Card Styling */
+.card {
+  background: var(--surface);
+  border: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.card-title {
+  color: var(--text-strong);
+}
+
+/* Button Overrides */
+.btn {
+  border-radius: 0.25rem;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.btn-primary {
+  background: var(--primary-gold);
+  border-color: var(--primary-gold);
+  color: var(--bg-dark);
+}
+
+.btn-primary:hover {
+  background: #B8911F;
+  border-color: #B8911F;
+}
+
+.btn-ghost {
+  color: var(--text-muted);
+  border-color: rgba(181, 184, 190, 0.3);
+}
+
+.btn-ghost:hover {
+  background: rgba(181, 184, 190, 0.1);
+  color: var(--text-strong);
+}
+
+.btn-error {
+  background: var(--accent-crimson);
+  border-color: var(--accent-crimson);
+  color: var(--text-strong);
+}
+
+/* Input Styling */
+.input, .textarea, .select {
+  background: var(--surface);
+  border-color: rgba(181, 184, 190, 0.2);
+  color: var(--text-strong);
+}
+
+.input:focus, .textarea:focus, .select:focus {
+  border-color: var(--primary-gold);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.2);
+}
+
+/* Tab Styling */
+.tabs-boxed {
+  background: var(--surface);
+  border: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.tab {
+  color: var(--text-muted);
+  border-radius: 0.25rem;
+}
+
+.tab-active {
+  background: var(--primary-gold);
+  color: var(--bg-dark);
+  font-weight: 600;
+}
+
+/* Badge Styling */
+.badge {
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-success {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ADE80;
+  border-color: #4ADE80;
+}
+
+.badge-warning {
+  background: rgba(251, 146, 60, 0.2);
+  color: #FB923C;
+  border-color: #FB923C;
+}
+
+.badge-error {
+  background: rgba(209, 75, 75, 0.2);
+  color: var(--accent-crimson);
+  border-color: var(--accent-crimson);
+}
+
+/* Header Styling */
+.header {
+  background: rgba(18, 19, 21, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+/* Clapperboard Stripes */
+.clapperboard-stripes {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--primary-gold),
+    var(--primary-gold) 0.5rem,
+    var(--bg-dark) 0.5rem,
+    var(--bg-dark) 1rem
+  );
+  height: 0.25rem;
+}
+
+/* Spotlight Effect */
+.spotlight {
+  background: radial-gradient(
+    ellipse 800px 300px at 50% 0%,
+    rgba(201, 162, 39, 0.15),
+    transparent 50%
+  );
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 1rem 0;
+  }
+  
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .film-border {
+    border-radius: 0.125rem;
+  }
+  
+  /* Reduce film effects on mobile for performance */
+  .film-grain::before {
+    opacity: calc(var(--film-grain-opacity) * 0.5);
+  }
+  
+  .vignette::after {
+    opacity: calc(var(--vignette-opacity) * 0.7);
+  }
+}
+
+/* Utility Classes */
+.text-cinema-gold {
+  color: var(--primary-gold);
+}
+
+.text-cinema-crimson {
+  color: var(--accent-crimson);
+}
+
+.bg-cinema-surface {
+  background: var(--surface);
+}
+
+.border-cinema {
+  border-color: rgba(201, 162, 39, 0.2);
+}
+
+/* Smooth Transitions */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Loading Animation for HTMX */
+.htmx-request {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+/* Focus States for Accessibility */
+.btn:focus-visible,
+.input:focus-visible,
+.textarea:focus-visible,
+.select:focus-visible {
+  outline: 2px solid var(--primary-gold);
+  outline-offset: 2px;
+}

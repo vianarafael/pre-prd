@@ -1,13 +1,18 @@
 {% extends "base.html" %} {% block content %}
+<div class="hero-section">
+  <h1 class="hero-title">Plan like film. Ship like indie.</h1>
+  <p class="hero-tagline">Transform ideas into artifacts with cinema-grade precision</p>
+</div>
+
 <div class="max-w-screen-xl mx-auto">
   <section
-    class="bg-card/80 backdrop-blur-sm rounded-xl p-4 film-border relative overflow-hidden"
+    class="bg-cinema-surface film-border relative overflow-hidden rounded-lg p-6"
   >
     <div class="absolute inset-0 spotlight opacity-20"></div>
     <div class="relative z-10">
       {% include 'partials/tabs.html' %}
 
-      <div id="panel" class="mt-3">{% include 'partials/panel.html' %}</div>
+      <div id="panel" class="mt-4">{% include 'partials/panel.html' %}</div>
     </div>
   </section>
 </div>
