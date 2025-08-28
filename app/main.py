@@ -6,6 +6,8 @@ import zlib
 import hmac
 import hashlib
 import secrets
+import time
+from typing import Dict, List, Tuple
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
@@ -171,9 +173,10 @@ async def panel(request: Request) -> HTMLResponse:
             editing_scene = next((s for s in scenes_data if s.get("id") == scene_id), None)
         elif op == "save":
             original_id = form.get("original_id") or form.get("edit_id")
-            scene_id = form.get("edit_id")
-            title = form.get("edit_title") or "Untitled"
-            goal = form.get("edit_goal") or ""
+            scene_id_raw = form.get("edit_id")
+            title_raw = form.get("edit_title") or "Untitled"
+            goal_raw = form.get("edit_goal") or ""
+            scene_id, title, goal = _validate_scene_fields(scene_id_raw, title_raw, goal_raw)
             updated = False
             for s in scenes_data:
                 if s.get("id") == original_id:
@@ -221,21 +224,18 @@ async def panel(request: Request) -> HTMLResponse:
             target_id = request.query_params.get("id")
             # pull current values (not yet saved) from the form
             base = {
-                "id": form.get("shot_id") or target_id or "",
-                "epic_id": form.get("shot_epic_id") or "E1",
-                "title": form.get("shot_title") or "Untitled",
-                "status": form.get("shot_status") or "todo",
-                "priority": form.get("shot_priority") or "P2",
-                "description": form.get("shot_description") or "",
+                "id": _sanitize_shot_id(form.get("shot_id") or target_id or ""),
+                "epic_id": _sanitize_epic_id(form.get("shot_epic_id") or "E1"),
+                "title": _clamp_text(form.get("shot_title") or "Untitled", MAX_SHOT_TITLE_LEN),
+                "status": _sanitize_status(form.get("shot_status") or "todo"),
+                "priority": _sanitize_priority(form.get("shot_priority") or "P2"),
+                "description": _clamp_text(form.get("shot_description") or "", MAX_DESCRIPTION_LEN),
             }
             texts = form.getlist("shot_check_text") if hasattr(form, "getlist") else []
             tags = form.getlist("shot_check_tag") if hasattr(form, "getlist") else []
-            checklist = []
-            for i in range(max(len(texts), len(tags))):
-                text = texts[i] if i < len(texts) else ""
-                tag = tags[i] if i < len(tags) else "positive"
-                checklist.append({"text": text, "tag": tag})
-            checklist.append({"text": "", "tag": "positive"})
+            checklist = _sanitize_checklist(texts, tags)
+            if len(checklist) < MAX_CHECKLIST_ITEMS:
+                checklist.append({"text": "", "tag": "positive"})
             base["checklist"] = checklist
             editing_shot = base
         elif op == "remove_check":
@@ -246,47 +246,40 @@ async def panel(request: Request) -> HTMLResponse:
             except Exception:
                 idx = -1
             base = {
-                "id": form.get("shot_id") or target_id or "",
-                "epic_id": form.get("shot_epic_id") or "E1",
-                "title": form.get("shot_title") or "Untitled",
-                "status": form.get("shot_status") or "todo",
-                "priority": form.get("shot_priority") or "P2",
-                "description": form.get("shot_description") or "",
+                "id": _sanitize_shot_id(form.get("shot_id") or target_id or ""),
+                "epic_id": _sanitize_epic_id(form.get("shot_epic_id") or "E1"),
+                "title": _clamp_text(form.get("shot_title") or "Untitled", MAX_SHOT_TITLE_LEN),
+                "status": _sanitize_status(form.get("shot_status") or "todo"),
+                "priority": _sanitize_priority(form.get("shot_priority") or "P2"),
+                "description": _clamp_text(form.get("shot_description") or "", MAX_DESCRIPTION_LEN),
             }
             texts = form.getlist("shot_check_text") if hasattr(form, "getlist") else []
             tags = form.getlist("shot_check_tag") if hasattr(form, "getlist") else []
             checklist = []
-            for i in range(max(len(texts), len(tags))):
+            max_items = min(MAX_CHECKLIST_ITEMS, max(len(texts), len(tags)))
+            for i in range(max_items):
                 if i == idx:
                     continue
-                text = texts[i] if i < len(texts) else ""
-                tag = tags[i] if i < len(tags) else "positive"
+                text = _clamp_text(texts[i] if i < len(texts) else "", MAX_CHECK_TEXT_LEN)
+                tag = (tags[i] if i < len(tags) else "positive")
+                if tag not in {"positive", "negative", "error"}:
+                    tag = "positive"
+                if not text:
+                    continue
                 checklist.append({"text": text, "tag": tag})
             base["checklist"] = checklist
             editing_shot = base
         elif op == "save":
             original_id = form.get("shot_original_id") or form.get("shot_id")
-            shot_id = form.get("shot_id")
-            epic_id = form.get("shot_epic_id") or "E1"
-            title = form.get("shot_title") or "Untitled"
-            status = (form.get("shot_status") or "todo").lower()
-            if status not in {"todo", "doing", "done"}:
-                status = "todo"
-            priority = form.get("shot_priority") or "P2"
-            if priority not in {"P1", "P2", "P3"}:
-                priority = "P2"
-            description = form.get("shot_description") or ""
+            shot_id = _sanitize_shot_id(form.get("shot_id"))
+            epic_id = _sanitize_epic_id(form.get("shot_epic_id") or "E1")
+            title = _clamp_text(form.get("shot_title") or "Untitled", MAX_SHOT_TITLE_LEN)
+            status = _sanitize_status(form.get("shot_status") or "todo")
+            priority = _sanitize_priority(form.get("shot_priority") or "P2")
+            description = _clamp_text(form.get("shot_description") or "", MAX_DESCRIPTION_LEN)
             texts = form.getlist("shot_check_text") if hasattr(form, "getlist") else []
             tags = form.getlist("shot_check_tag") if hasattr(form, "getlist") else []
-            checklist = []
-            for i in range(max(len(texts), len(tags))):
-                text = texts[i] if i < len(texts) else ""
-                tag = tags[i] if i < len(tags) else "positive"
-                if not text and not tag:
-                    continue
-                if tag not in {"positive", "negative", "error"}:
-                    tag = "positive"
-                checklist.append({"text": text, "tag": tag})
+            checklist = _sanitize_checklist(texts, tags)
             updated = False
             for s in shots_data:
                 if s.get("id") == original_id:
@@ -361,6 +354,8 @@ def compute_continuity(*args, **kwargs):
 
 @app.post("/export")
 async def export(request: Request) -> StreamingResponse:
+    # Basic rate limit: 10 requests / 60s per IP
+    _rate_limit(request, key="export", limit=10, window_seconds=60)
     form = await request.form()
     script_text = form.get("script_text", SCRIPT_DEFAULT)
     rules_text = form.get("rules_text", RULES_DEFAULT)
@@ -438,6 +433,8 @@ def _serialize_project(script_text: str, rules_text: str, scenes_json: str, shot
 
 @app.post("/api/share")
 async def api_share(request: Request) -> JSONResponse:
+    # Basic rate limit: 20 requests / 60s per IP
+    _rate_limit(request, key="share", limit=20, window_seconds=60)
     form = await request.form()
     script_text = form.get("script_text", SCRIPT_DEFAULT)
     rules_text = form.get("rules_text", RULES_DEFAULT)
@@ -525,4 +522,103 @@ async def unhandled_error_handler(request: Request, exc: Exception):
         )
     except Exception:
         return JSONResponse({"error": "internal server error"}, status_code=500)
+
+
+# --- Input caps, validation, and basic rate limiting ---
+
+MAX_REQUEST_BYTES = int(os.getenv("MAX_REQUEST_BYTES", "1048576"))  # 1 MiB default
+MAX_CHECKLIST_ITEMS = int(os.getenv("MAX_CHECKLIST_ITEMS", "50"))
+MAX_SHOT_TITLE_LEN = int(os.getenv("MAX_SHOT_TITLE_LEN", "200"))
+MAX_DESCRIPTION_LEN = int(os.getenv("MAX_DESCRIPTION_LEN", "2000"))
+MAX_CHECK_TEXT_LEN = int(os.getenv("MAX_CHECK_TEXT_LEN", "200"))
+MAX_SCENE_TITLE_LEN = int(os.getenv("MAX_SCENE_TITLE_LEN", "200"))
+MAX_SCENE_GOAL_LEN = int(os.getenv("MAX_SCENE_GOAL_LEN", "400"))
+
+
+@app.middleware("http")
+async def limit_request_size(request, call_next):
+    try:
+        content_length = request.headers.get("content-length")
+        if content_length is not None and int(content_length) > MAX_REQUEST_BYTES:
+            return JSONResponse({"error": "request too large"}, status_code=413)
+    except Exception:
+        pass
+    response = await call_next(request)
+    return response
+
+
+def _clamp_text(value: str, max_len: int) -> str:
+    if not isinstance(value, str):
+        value = str(value) if value is not None else ""
+    return value[:max_len]
+
+
+def _sanitize_status(value: str) -> str:
+    v = (value or "").lower()
+    return v if v in {"todo", "doing", "done"} else "todo"
+
+
+def _sanitize_priority(value: str) -> str:
+    v = (value or "").upper()
+    return v if v in {"P1", "P2", "P3"} else "P2"
+
+
+def _sanitize_epic_id(value: str) -> str:
+    v = (value or "E1").strip()
+    if not v.startswith("E"):
+        v = f"E{v}"
+    return v[:16]
+
+
+def _sanitize_shot_id(value: str) -> str:
+    v = (value or "T1").strip()
+    if not v.startswith("T"):
+        v = f"T{v}"
+    return v[:16]
+
+
+def _sanitize_checklist(texts: List[str], tags: List[str]) -> List[dict]:
+    items: List[dict] = []
+    max_items = min(MAX_CHECKLIST_ITEMS, max(len(texts), len(tags)))
+    for i in range(max_items):
+        text = _clamp_text(texts[i] if i < len(texts) else "", MAX_CHECK_TEXT_LEN)
+        tag = (tags[i] if i < len(tags) else "positive")
+        if tag not in {"positive", "negative", "error"}:
+            tag = "positive"
+        if not text:
+            continue
+        items.append({"text": text, "tag": tag})
+    return items
+
+
+def _validate_scene_fields(scene_id: str, title: str, goal: str) -> Tuple[str, str, str]:
+    sid = (scene_id or "").strip() or "E1"
+    if not sid.startswith("E"):
+        sid = f"E{sid}"
+    sid = sid[:16]
+    return sid, _clamp_text(title or "Untitled", MAX_SCENE_TITLE_LEN), _clamp_text(goal or "", MAX_SCENE_GOAL_LEN)
+
+
+_RATE_LIMIT_BUCKETS: Dict[Tuple[str, str], List[float]] = {}
+
+
+def _client_ip(request: Request) -> str:
+    xfwd = request.headers.get("x-forwarded-for")
+    if xfwd:
+        return xfwd.split(",")[0].strip()
+    return getattr(request.client, "host", "unknown")
+
+
+def _rate_limit(request: Request, key: str, limit: int, window_seconds: int) -> None:
+    now = time.time()
+    ip = _client_ip(request)
+    bucket_key = (ip, key)
+    entries = _RATE_LIMIT_BUCKETS.get(bucket_key, [])
+    # prune
+    threshold = now - window_seconds
+    entries = [t for t in entries if t >= threshold]
+    if len(entries) >= limit:
+        raise HTTPException(status_code=429, detail="rate limit exceeded")
+    entries.append(now)
+    _RATE_LIMIT_BUCKETS[bucket_key] = entries
 
