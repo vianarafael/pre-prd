@@ -56,6 +56,31 @@
           >
             Export
           </button>
+          <button
+            id="btn-share"
+            class="btn btn-ghost border border-primary/30"
+            type="button"
+          >
+            Share
+          </button>
+          <button
+            id="btn-export-json"
+            class="btn btn-ghost border border-primary/30"
+            type="button"
+          >
+            Export JSON
+          </button>
+          <label
+            for="import-file"
+            class="btn btn-ghost border border-primary/30 cursor-pointer"
+            >Import JSON</label
+          >
+          <input
+            id="import-file"
+            type="file"
+            accept="application/json"
+            class="hidden"
+          />
         </div>
       </div>
     </header>
@@ -63,5 +88,247 @@
     <main class="container mx-auto p-4">{% block content %}{% endblock %}</main>
 
     {% block scripts %}{% endblock %}
+    <script>
+      (function () {
+        const STORAGE_KEY = "specstudio_project_v1";
+
+        function getForm() {
+          return document.getElementById("panel-form");
+        }
+
+        function getActiveTab() {
+          const active = document.querySelector("#tabs .tab.tab-active");
+          if (!active) return "script";
+          const post = active.getAttribute("hx-post") || "";
+          const m = post.match(/tab=([^&]+)/);
+          return m ? m[1] : "script";
+        }
+
+        function collectProjectFromForm(form) {
+          const get = (name) => {
+            const el = form.querySelector('[name="' + name + '"]');
+            return el ? el.value ?? "" : "";
+          };
+          const script_text = get("script_text");
+          const rules_text = get("rules_text");
+          let scenes = [];
+          let shots = [];
+          try {
+            scenes = JSON.parse(get("scenes_json") || "[]");
+          } catch (e) {
+            scenes = [];
+          }
+          try {
+            shots = JSON.parse(get("shots_json") || "[]");
+          } catch (e) {
+            shots = [];
+          }
+          const packs = {
+            pack_core:
+              (form.querySelector('[name="pack_core"]')?.checked
+                ? "on"
+                : form.querySelector('[name="pack_core"]')?.value || "on") ||
+              "on",
+            pack_opinionated: form.querySelector('[name="pack_opinionated"]')
+              ?.checked
+              ? "on"
+              : null,
+            pack_strict: form.querySelector('[name="pack_strict"]')?.checked
+              ? "on"
+              : null,
+          };
+          return { _v: 1, script_text, rules_text, scenes, shots, packs };
+        }
+
+        function applyProjectToForm(form, project) {
+          const setVal = (name, value) => {
+            const el = form.querySelector('[name="' + name + '"]');
+            if (el) el.value = value;
+          };
+          setVal("script_text", project.script_text || "");
+          setVal("rules_text", project.rules_text || "");
+          setVal("scenes_json", JSON.stringify(project.scenes || []));
+          setVal("shots_json", JSON.stringify(project.shots || []));
+          const pc = form.querySelector('[name="pack_core"]');
+          if (pc) pc.checked = !!(project.packs && project.packs.pack_core);
+          const po = form.querySelector('[name="pack_opinionated"]');
+          if (po)
+            po.checked = !!(project.packs && project.packs.pack_opinionated);
+          const ps = form.querySelector('[name="pack_strict"]');
+          if (ps) ps.checked = !!(project.packs && project.packs.pack_strict);
+        }
+
+        function saveToStorage() {
+          const form = getForm();
+          if (!form) return;
+          const data = collectProjectFromForm(form);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          } catch (e) {}
+        }
+
+        function restoreFromStorageOnce() {
+          if (window.__specstudio_restored) return;
+          window.__specstudio_restored = true;
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            const form = getForm();
+            if (!form) return;
+            applyProjectToForm(form, data);
+          } catch (e) {}
+        }
+
+        function debounce(fn, ms) {
+          let t;
+          return function () {
+            clearTimeout(t);
+            t = setTimeout(fn, ms);
+          };
+        }
+
+        const debouncedSave = debounce(saveToStorage, 300);
+
+        function hookAutosave() {
+          document.addEventListener(
+            "input",
+            (e) => {
+              const form = getForm();
+              if (!form) return;
+              if (form.contains(e.target)) debouncedSave();
+            },
+            { passive: true }
+          );
+          document.addEventListener(
+            "change",
+            (e) => {
+              const form = getForm();
+              if (!form) return;
+              if (form.contains(e.target)) debouncedSave();
+            },
+            { passive: true }
+          );
+        }
+
+        async function decodeFromHashIfPresent() {
+          const hash = window.location.hash || "";
+          const match = hash.match(/^#p=(.+)$/);
+          if (!match) return false;
+          const data = match[1];
+          try {
+            const res = await fetch(
+              "/api/decode?data=" + encodeURIComponent(data)
+            );
+            if (!res.ok) throw new Error("decode failed");
+            const obj = await res.json();
+            const form = getForm();
+            if (form) {
+              applyProjectToForm(form, obj);
+              try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+              } catch (_) {}
+              const tab = getActiveTab();
+              if (window.htmx) {
+                window.htmx.ajax("POST", "/panel?tab=" + tab, {
+                  target: "#panel",
+                  swap: "innerHTML",
+                  values: new FormData(form),
+                });
+              }
+            }
+            history.replaceState(
+              null,
+              document.title,
+              window.location.pathname + window.location.search
+            );
+            return true;
+          } catch (e) {
+            console.error(e);
+            return false;
+          }
+        }
+
+        function wireButtons() {
+          const shareBtn = document.getElementById("btn-share");
+          if (shareBtn) {
+            shareBtn.addEventListener("click", async () => {
+              const form = getForm();
+              if (!form) return;
+              const fd = new FormData(form);
+              try {
+                const res = await fetch("/api/share", {
+                  method: "POST",
+                  body: fd,
+                });
+                const data = await res.json();
+                const url = data.url;
+                await navigator.clipboard.writeText(url);
+                alert("Share link copied to clipboard");
+              } catch (e) {
+                alert("Failed to create share link");
+              }
+            });
+          }
+
+          const exportBtn = document.getElementById("btn-export-json");
+          if (exportBtn) {
+            exportBtn.addEventListener("click", () => {
+              const form = getForm();
+              if (!form) return;
+              const data = collectProjectFromForm(form);
+              const blob = new Blob([JSON.stringify(data, null, 2)], {
+                type: "application/json",
+              });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "project.json";
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            });
+          }
+
+          const importInput = document.getElementById("import-file");
+          if (importInput) {
+            importInput.addEventListener("change", async (e) => {
+              const file = e.target.files && e.target.files[0];
+              if (!file) return;
+              try {
+                const text = await file.text();
+                const obj = JSON.parse(text);
+                const form = getForm();
+                if (!form) return;
+                applyProjectToForm(form, obj);
+                try {
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+                } catch (_) {}
+                const tab = getActiveTab();
+                if (window.htmx) {
+                  window.htmx.ajax("POST", "/panel?tab=" + tab, {
+                    target: "#panel",
+                    swap: "innerHTML",
+                    values: new FormData(form),
+                  });
+                }
+              } catch (err) {
+                alert("Invalid project JSON");
+              } finally {
+                importInput.value = "";
+              }
+            });
+          }
+        }
+
+        window.addEventListener("DOMContentLoaded", async () => {
+          hookAutosave();
+          await decodeFromHashIfPresent();
+          restoreFromStorageOnce();
+          wireButtons();
+        });
+      })();
+    </script>
   </body>
 </html>

@@ -1,8 +1,14 @@
 from pathlib import Path
 import json
+import os
+import base64
+import zlib
+import hmac
+import hashlib
+import secrets
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -263,4 +269,93 @@ async def export(request: Request) -> StreamingResponse:
         },
     )
 
+
+# --- Share link utilities and endpoints (no DB) ---
+
+def _b64url_encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _b64url_decode(data_str: str) -> bytes:
+    padding = "=" * (-len(data_str) % 4)
+    return base64.urlsafe_b64decode(data_str + padding)
+
+
+def _get_share_secret() -> bytes:
+    # Prefer a stable secret if provided; otherwise generate ephemeral per-process
+    secret = os.getenv("SHARE_SECRET")
+    if secret:
+        return secret.encode("utf-8")
+    # Ephemeral fallback is fine for pre-prod/local usage
+    if not hasattr(_get_share_secret, "_cached"):
+        setattr(_get_share_secret, "_cached", secrets.token_urlsafe(32).encode("utf-8"))
+    return getattr(_get_share_secret, "_cached")
+
+
+def _serialize_project(script_text: str, rules_text: str, scenes_json: str, shots_json: str, packs: dict) -> str:
+    # Store as a single JSON string; scenes/shots are passed as JSON strings from the form
+    try:
+        scenes = json.loads(scenes_json) if scenes_json else []
+    except Exception:
+        scenes = []
+    try:
+        shots = json.loads(shots_json) if shots_json else []
+    except Exception:
+        shots = []
+    data = {
+        "script_text": script_text,
+        "rules_text": rules_text,
+        "scenes": scenes,
+        "shots": shots,
+        "packs": packs,
+        # Version for future compatibility
+        "_v": 1,
+    }
+    return json.dumps(data, separators=(",", ":"))
+
+
+@app.post("/api/share")
+async def api_share(request: Request) -> JSONResponse:
+    form = await request.form()
+    script_text = form.get("script_text", SCRIPT_DEFAULT)
+    rules_text = form.get("rules_text", RULES_DEFAULT)
+    scenes_json = form.get("scenes_json", json.dumps(SCENES_DEFAULT))
+    shots_json = form.get("shots_json", json.dumps(SHOTS_DEFAULT))
+    packs = {
+        "pack_core": form.get("pack_core") or "on",
+        "pack_opinionated": form.get("pack_opinionated"),
+        "pack_strict": form.get("pack_strict"),
+    }
+
+    payload_json = _serialize_project(script_text, rules_text, scenes_json, shots_json, packs)
+    compressed = zlib.compress(payload_json.encode("utf-8"), level=9)
+    payload = _b64url_encode(compressed)
+
+    secret = _get_share_secret()
+    sig_bytes = hmac.new(secret, payload.encode("ascii"), hashlib.sha256).digest()
+    sig = _b64url_encode(sig_bytes)
+    short_id = hashlib.sha256(compressed).hexdigest()[:8]
+
+    base = str(request.base_url).rstrip("/")
+    url = f"{base}/#p={short_id}.{payload}.{sig}"
+    return JSONResponse({"id": short_id, "url": url, "payload": payload, "sig": sig})
+
+
+@app.get("/api/decode")
+async def api_decode(data: str) -> JSONResponse:
+    # data format: <id>.<payload>.<sig>
+    try:
+        parts = data.split(".", 2)
+        if len(parts) != 3:
+            raise ValueError("invalid format")
+        _id, payload, sig = parts
+        secret = _get_share_secret()
+        expected_sig = _b64url_encode(hmac.new(secret, payload.encode("ascii"), hashlib.sha256).digest())
+        if not hmac.compare_digest(sig, expected_sig):
+            raise ValueError("bad signature")
+        decompressed = zlib.decompress(_b64url_decode(payload))
+        obj = json.loads(decompressed)
+        return JSONResponse(obj)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid share data: {exc}")
 
