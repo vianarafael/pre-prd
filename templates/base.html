@@ -2,29 +2,38 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
     <title>{{ page_title or 'pre prd' }}</title>
-    
+
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="pre prd" />
-    <meta name="description" content="Plan like film. Ship like indie. Transform ideas into artifacts with cinema-grade precision." />
+    <meta
+      name="description"
+      content="Plan like film. Ship like indie. Transform ideas into artifacts with cinema-grade precision."
+    />
     <meta name="theme-color" content="#c9a227" />
     <meta name="background-color" content="#0b0b0c" />
-    
+
     <!-- iOS Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="apple-mobile-web-app-title" content="pre prd" />
     <link rel="apple-touch-icon" href="/assets/favicon.svg" />
     <link rel="apple-touch-startup-image" href="/assets/favicon.svg" />
-    
+
     <!-- Android Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
-    
+
     <!-- PWA Manifest -->
     <link rel="manifest" href="/assets/manifest.json" />
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -43,6 +52,76 @@
     {% block head %}{% endblock %}
   </head>
   <body class="min-h-screen film-grain vignette">
+    <!-- Mobile Menu Overlay -->
+    <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="toggleMenu()"></div>
+    
+    <!-- Mobile Slide Menu -->
+    <div id="mobile-menu" class="fixed top-0 left-0 h-full w-80 bg-cinema-surface border-r border-cinema transform -translate-x-full transition-transform duration-300 ease-in-out z-50">
+      <div class="p-6 border-b border-cinema">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-cinema-gold">Menu</h2>
+          <button onclick="toggleMenu()" class="text-cinema-gold hover:text-text-strong">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <div class="p-6 space-y-4">
+        <button
+          class="w-full btn btn-primary text-left justify-start"
+          type="submit"
+          form="panel-form"
+          formaction="/export"
+          formmethod="post"
+        >
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Export .zip
+        </button>
+        
+        <button
+          id="btn-share"
+          class="w-full btn btn-ghost text-left justify-start"
+          type="button"
+        >
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+          </svg>
+          Share
+        </button>
+        
+        <button
+          id="btn-export-json"
+          class="w-full btn btn-ghost text-left justify-start"
+          type="button"
+        >
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+          </svg>
+          Export JSON
+        </button>
+        
+        <label
+          for="import-file"
+          class="w-full btn btn-ghost text-left justify-start cursor-pointer"
+        >
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+          </svg>
+          Import JSON
+        </label>
+        <input
+          id="import-file"
+          type="file"
+          accept="application/json"
+          class="hidden"
+        />
+      </div>
+    </div>
+
     <header class="header relative">
       <div
         class="absolute top-0 left-0 w-full clapperboard-stripes opacity-60"
@@ -50,6 +129,14 @@
       <div
         class="container mx-auto px-4 py-4 flex items-center justify-between"
       >
+        <!-- Hamburger Menu Button -->
+        <button onclick="toggleMenu()" class="text-cinema-gold hover:text-text-strong">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+
+        <!-- Logo and Brand -->
         <div class="flex items-center gap-3">
           <div class="relative">
             <span
@@ -69,50 +156,40 @@
             </div>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <button
-            class="btn btn-ghost"
-            type="submit"
-            form="panel-form"
-            formaction="/export"
-            formmethod="post"
-          >
-            Export .zip
-          </button>
-          <button id="btn-share" class="btn btn-ghost" type="button">
-            Share
-          </button>
-          <button id="btn-export-json" class="btn btn-ghost" type="button">
-            Export JSON
-          </button>
-          <label for="import-file" class="btn btn-ghost cursor-pointer"
-            >Import JSON</label
-          >
-          <input
-            id="import-file"
-            type="file"
-            accept="application/json"
-            class="hidden"
-          />
-        </div>
       </div>
     </header>
 
     <main class="container mx-auto p-4">{% block content %}{% endblock %}</main>
 
-         {% block scripts %}{% endblock %}
-     <script>
-       // Register Service Worker for PWA
-       if ('serviceWorker' in navigator) {
-         window.addEventListener('load', () => {
-           navigator.serviceWorker.register('/assets/sw.js')
-             .then((registration) => {
-               console.log('SW registered: ', registration);
-             })
-             .catch((registrationError) => {
-               console.log('SW registration failed: ', registrationError);
-             });
-         });
+    {% block scripts %}{% endblock %}
+    <script>
+      // Register Service Worker for PWA
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/assets/sw.js")
+            .then((registration) => {
+              console.log("SW registered: ", registration);
+            })
+            .catch((registrationError) => {
+              console.log("SW registration failed: ", registrationError);
+            });
+        });
+      }
+
+             // Toggle mobile menu
+       function toggleMenu() {
+         const menu = document.getElementById('mobile-menu');
+         const overlay = document.getElementById('menu-overlay');
+         const isOpen = !menu.classList.contains('-translate-x-full');
+         
+         if (isOpen) {
+           menu.classList.add('-translate-x-full');
+           overlay.classList.add('hidden');
+         } else {
+           menu.classList.remove('-translate-x-full');
+           overlay.classList.remove('hidden');
+         }
        }
 
        (function () {
