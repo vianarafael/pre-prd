@@ -1,0 +1,203 @@
+<form id="panel-form">
+  {% if tab == 'rules' %}
+  <textarea
+    name="rules_text"
+    class="textarea textarea-bordered w-full mt-3 bg-background/50 border-primary/30 resize-y min-h-[18rem] md:min-h-[24rem] lg:min-h-[32rem] xl:min-h-[65vh] 2xl:min-h-[75vh]"
+    placeholder="# Cursor Rules"
+  >
+{{ rules_text }}</textarea
+  >
+  <textarea name="script_text" class="hidden" aria-hidden="true">
+{{ script_text }}</textarea
+  >
+  <input
+    type="hidden"
+    name="scenes_json"
+    value='{{ scenes_json|default("[]")|e }}'
+  />
+  {% elif tab == 'scenes' %}
+  <input type="hidden" name="script_text" value="{{ script_text|e }}" />
+  <input type="hidden" name="rules_text" value="{{ rules_text|e }}" />
+  <input
+    type="hidden"
+    name="scenes_json"
+    value='{{ scenes_json|default("[]")|e }}'
+  />
+
+  <div class="space-y-3">
+    <div class="flex items-center justify-between">
+      <h3
+        class="text-xl font-bold text-primary"
+        style="font-family: var(--font-display, Inter)"
+      >
+        Scenes (Epics)
+      </h3>
+      <button
+        class="btn btn-primary"
+        hx-post="/panel?tab=scenes&op=add"
+        hx-target="#panel"
+        hx-swap="innerHTML"
+        hx-include="#panel form"
+      >
+        Add Scene
+      </button>
+    </div>
+
+    {% for scene in scenes_data %}
+    <div
+      class="bg-card/70 rounded-lg p-4 border {{ 'border-secondary/30' if editing_scene and editing_scene.id == scene.id else 'border-primary/20' }}"
+    >
+      {% if editing_scene and editing_scene.id == scene.id %}
+      <div class="grid md:grid-cols-2 gap-3">
+        <input
+          type="hidden"
+          name="original_id"
+          value="{{ editing_scene.id }}"
+        />
+        <input
+          name="edit_id"
+          value="{{ editing_scene.id }}"
+          class="input input-bordered w-full"
+        />
+        <input
+          name="edit_title"
+          value="{{ editing_scene.title }}"
+          placeholder="Title"
+          class="input input-bordered w-full"
+        />
+        <input
+          name="edit_goal"
+          value="{{ editing_scene.goal }}"
+          placeholder="Goal"
+          class="input input-bordered md:col-span-2 w-full"
+        />
+      </div>
+      <div class="mt-3 flex gap-2 justify-end">
+        <button
+          class="btn"
+          hx-post="/panel?tab=scenes&op=save"
+          hx-target="#panel"
+          hx-include="#panel form"
+          hx-swap="innerHTML"
+        >
+          Save
+        </button>
+        <button
+          class="btn btn-ghost"
+          hx-post="/panel?tab=scenes"
+          hx-target="#panel"
+          hx-include="#panel form"
+          hx-swap="innerHTML"
+        >
+          Cancel
+        </button>
+      </div>
+      {% else %}
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="font-semibold">{{ scene.id }} — {{ scene.title }}</div>
+          <div class="text-sm opacity-80">Goal: {{ scene.goal }}</div>
+        </div>
+        <div class="flex gap-2">
+          <button
+            class="btn btn-outline"
+            hx-post="/panel?tab=scenes&op=edit&id={{ scene.id }}"
+            hx-target="#panel"
+            hx-swap="innerHTML"
+            hx-include="#panel form"
+          >
+            Edit
+          </button>
+          <button
+            class="btn btn-outline btn-error"
+            hx-post="/panel?tab=scenes&op=delete&id={{ scene.id }}"
+            hx-target="#panel"
+            hx-swap="innerHTML"
+            hx-include="#panel form"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  {% if tab == 'shots' %}
+  <input type="hidden" name="script_text" value="{{ script_text|e }}" />
+  <input type="hidden" name="rules_text" value="{{ rules_text|e }}" />
+  <input type="hidden" name="scenes_json" value='{{ scenes_json|default("[]")|e }}' />
+  <input type="hidden" name="shots_json" value='{{ shots_json|default("[]")|e }}' />
+
+  <div class="space-y-3">
+    <div class="flex items-center justify-between">
+      <h3 class="text-xl font-bold text-primary" style="font-family: var(--font-display, Inter)">Shots (Tickets)</h3>
+      <button class="btn btn-primary" hx-post="/panel?tab=shots&op=add" hx-target="#panel" hx-swap="innerHTML" hx-include="#panel form">New Shot</button>
+    </div>
+
+    {% for shot in shots_data %}
+    <div class="bg-card/70 rounded-lg p-4 border {{ 'border-secondary/30' if editing_shot and editing_shot.id == shot.id else 'border-primary/20' }}">
+      {% if editing_shot and editing_shot.id == shot.id %}
+      <div class="grid md:grid-cols-3 gap-3">
+        <input type="hidden" name="shot_original_id" value="{{ editing_shot.id }}" />
+        <input name="shot_id" value="{{ editing_shot.id }}" class="input input-bordered w-full" />
+        <input name="shot_epic_id" value="{{ editing_shot.epic_id }}" class="input input-bordered w-full" placeholder="Epic (E1)" />
+        <select name="shot_status" class="select select-bordered w-full">
+          {% for s in ['todo','in-progress','review','done'] %}
+          <option value="{{ s }}" {% if editing_shot.status == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+        <input name="shot_title" value="{{ editing_shot.title }}" class="input input-bordered md:col-span-2 w-full" placeholder="Title" />
+        <select name="shot_priority" class="select select-bordered w-full">
+          {% for p in ['low','medium','high','critical'] %}
+          <option value="{{ p }}" {% if editing_shot.priority == p %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mt-3 flex gap-2 justify-end">
+        <button class="btn" hx-post="/panel?tab=shots&op=save" hx-target="#panel" hx-include="#panel form" hx-swap="innerHTML">Save</button>
+        <button class="btn btn-ghost" hx-post="/panel?tab=shots" hx-target="#panel" hx-include="#panel form" hx-swap="innerHTML">Cancel</button>
+      </div>
+      {% else %}
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="font-semibold">{{ shot.id }} — {{ shot.title }}</div>
+          <div class="text-sm opacity-80">Epic: {{ shot.epic_id }} • Status: {{ shot.status }} • Priority: {{ shot.priority }}</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-outline" hx-post="/panel?tab=shots&op=edit&id={{ shot.id }}" hx-target="#panel" hx-swap="innerHTML" hx-include="#panel form">Edit</button>
+          <button class="btn btn-outline btn-error" hx-post="/panel?tab=shots&op=delete&id={{ shot.id }}" hx-target="#panel" hx-swap="innerHTML" hx-include="#panel form">Delete</button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <textarea
+    name="script_text"
+    class="textarea textarea-bordered w-full mt-3 bg-background/50 border-primary/30 resize-y min-h-[18rem] md:min-h-[24rem] lg:min-h-[32rem] xl:min-h-[65vh] 2xl:min-h-[75vh]"
+    placeholder="FADE IN: Write your production script here..."
+  >
+{{ script_text }}</textarea
+  >
+  <textarea name="rules_text" class="hidden" aria-hidden="true">
+{{ rules_text }}</textarea
+  >
+  <input
+    type="hidden"
+    name="scenes_json"
+    value='{{ scenes_json|default("[]")|e }}'
+  />
+  <input
+    type="hidden"
+    name="shots_json"
+    value='{{ shots_json|default("[]")|e }}'
+  />
+  {% endif %}
+  {% endif %}
+</form>
+
+

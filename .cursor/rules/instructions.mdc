@@ -1,0 +1,38 @@
+# Cursor Rules (Core)
+
+- **Stack:** Python 3.12, FastAPI, Jinja2, HTMX, SQLite.
+- **Rendering:** Prefer **server-rendered HTML**. Use HTMX (`hx-get`, `hx-post`, `hx-target`, `hx-swap`) for interactivity.  
+  Endpoints return `TemplateResponse` (full pages or partials in `templates/partials/`). Only return JSON when explicitly required (e.g., `/export` payloads).
+- **Architecture:** Three layers
+  - `routes/` → HTTP handlers only (authorization, request/response shaping).
+  - `services/` → business rules, orchestration; no web/DB code.
+  - `repo/` → **all** DB access. Parameterized SQL only. Manage transactions here.
+- **Rule:** **No raw SQL in handlers**; DB goes through `repo/` (use `sqlite3.Row` row_factory).
+- **Templates:** DaisyUI for styling. Base layout `templates/base.html`; page `templates/index.html`; reusable partials under `templates/partials/*`.
+- **Config/Secrets:** Load from `.env`. Commit `.env.example`. **Never** commit real secrets.
+- **Typing & Style:** PEP8 + **type hints everywhere**. Add `from __future__ import annotations` where helpful.
+- **Tooling:** `ruff` for lint, `mypy` for typing, `pytest` for tests, `httpx.TestClient` for route tests.
+- **Performance:** Target p95 < 200ms for `/` and `/export` at MVP load. Avoid N+1s; keep pages cacheable where safe.
+- **HTMX Conventions:** Prefer `hx-swap="outerHTML"` for row/partial replaces; name partials by what they render (e.g., `preview_prd.html`, `epic_row.html`).
+
+---
+
+# Cursor Rules (Opinionated)
+
+- **Tests-first from PRD AC:** Derive tests directly from acceptance criteria in `docs/PRD.md`. Add golden-file tests for:
+- `docs/PRD.md` render
+- `.cursor/rules/instructions.mdc` composition
+- `docs/epics.json`, `docs/tickets.json` exports
+- **Routes stay thin:** No business logic, no SQL, no JSON shape building beyond choosing the template. Handlers call services and return templates/partials.
+- **Service pattern:** Services return a small `Result` shape (`ok/value/error`) instead of raising exceptions for control flow. Map domain errors to HTTP in routes.
+- **Repo rules:** One transaction per operation via a context manager in `repo/db.py`. All queries parameterized; never build SQL with f-strings; return dicts (via `sqlite3.Row`).
+- **Naming & layout:**
+- Python modules snake_case; templates kebab-case.
+- Partials live under `templates/partials/` and render **only** what will be swapped by HTMX.
+- **UX conventions:**
+- Buttons that mutate state should be HTMX forms (`method=post`) with a precise `hx-target`.
+- Keep client JS to near zero; prefer server decisions and partial renders.
+- **CI expectations:** On PR, run `ruff check`, `mypy app`, and `pytest -q`. Fail the build on any lint/type error. Keep coverage ≥ 80% on services/repo.
+- **Exports:** `/export` returns either a zip or `artifacts.json` containing **exactly**: `PRD.md`, `instructions.mdc`, `epics.json`, `tickets.json`. Tests compare against goldens byte-for-byte.
+- **Logging & observability:** Log query timings in repo; log route timings at INFO. No sensitive data in logs.
+- **Edge-case hygiene:** Acceptance Criteria must include at least one negative/error path per story; AC bullets start with a verb; linter should flag duplicates.

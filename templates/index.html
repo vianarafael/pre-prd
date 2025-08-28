@@ -1,0 +1,26 @@
+{% extends "base.html" %} {% block content %}
+<div class="max-w-screen-xl mx-auto">
+  <section
+    class="bg-card/80 backdrop-blur-sm rounded-xl p-4 film-border relative overflow-hidden"
+  >
+    <div class="absolute inset-0 spotlight opacity-20"></div>
+    <div class="relative z-10">
+      {% include 'partials/tabs.html' %}
+
+      <div id="panel" class="mt-3">{% include 'partials/panel.html' %}</div>
+
+      <div class="mt-3 flex items-center justify-end gap-2">
+        <button
+          class="btn btn-primary"
+          type="submit"
+          form="panel-form"
+          formaction="/export"
+          formmethod="post"
+        >
+          Export
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ page_title or 'SpecStudio' }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+    <link rel="stylesheet" href="/assets/global.css" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    {% block head %}{% endblock %}
+  </head>
+  <body class="min-h-screen bg-background text-foreground film-grain">
+    <header
+      class="border-b border-primary/20 bg-card/50 backdrop-blur-sm relative"
+    >
+      <div
+        class="absolute top-0 left-0 w-full h-1 clapperboard-stripes opacity-60"
+      ></div>
+      <div
+        class="container mx-auto px-4 py-4 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <span class="inline-block w-8 h-8">
+              <img src="/assets/favicon.svg" alt="SpecStudio" class="w-8 h-8" />
+            </span>
+          </div>
+          <div>
+            <h1
+              class="text-2xl font-bold text-primary"
+              style="font-family: var(--font-display, Inter)"
+            >
+              SpecStudio
+            </h1>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            class="btn btn-ghost border border-primary/30"
+            type="submit"
+            form="panel-form"
+            formaction="/export"
+            formmethod="post"
+          >
+            Export
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mx-auto p-4">{% block content %}{% endblock %}</main>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

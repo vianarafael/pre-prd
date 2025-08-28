@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+  <defs>
+    <style>
+      .a { fill: none; stroke: #f5c15b; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .b { fill: #f5c15b; }
+    </style>
+  </defs>
+  <!-- Clapperboard top -->
+  <path class="a" d="M6 16h36l6 10H12z"/>
+  <path class="a" d="M12 16l8-8h12l-8 8m10 0l8-8h8l-8 8"/>
+  <!-- Film reel body -->
+  <circle class="a" cx="40" cy="42" r="18"/>
+  <!-- Reel holes -->
+  <circle class="b" cx="40" cy="42" r="3.2"/>
+  <circle class="b" cx="48.5" cy="42" r="2.6"/>
+  <circle class="b" cx="31.5" cy="42" r="2.6"/>
+  <circle class="b" cx="40" cy="50.5" r="2.6"/>
+  <circle class="b" cx="40" cy="33.5" r="2.6"/>
+</svg>
+
