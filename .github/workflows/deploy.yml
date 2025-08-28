@@ -1,21 +1,22 @@
+# .github/workflows/deploy.yml
 name: Deploy on push to main/master
 on:
-  push:
-    branches: [main, master]
+  push: { branches: [main, master] }
   workflow_dispatch: {}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: SSH & run deploy
+      - name: SSH & run server deploy script
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          username: ${{ secrets.SSH_USER }} # deploy
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
+          # port: ${{ secrets.SSH_PORT }}       # omit if 22
+          script_stop: true
           script: |
-            set -e
-            cd "/srv/apps/${{ secrets.APP_NAME }}"
-            sudo ./deploy.sh
+            set -euo pipefail
+            cd "/srv/apps/${{ vars.APP_NAME }}"
+            ./deploy.sh
