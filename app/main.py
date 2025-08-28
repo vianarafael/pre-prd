@@ -9,6 +9,7 @@ import secrets
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -479,4 +480,49 @@ async def api_decode(data: str) -> JSONResponse:
         return JSONResponse(obj)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Invalid share data: {exc}")
+
+
+# --- Healthcheck and error pages ---
+
+@app.get("/health")
+async def health() -> JSONResponse:
+    return JSONResponse({"status": "ok"})
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error_handler(request: Request, exc: StarletteHTTPException):
+    # Render a basic HTML error page for typical HTTP errors (e.g., 404)
+    try:
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "page_title": f"Error {exc.status_code}",
+                "status_code": exc.status_code,
+                "detail": getattr(exc, "detail", "") or "",
+                "path": str(request.url.path),
+            },
+            status_code=exc.status_code,
+        )
+    except Exception:
+        # Fallback to JSON if template fails for any reason
+        return JSONResponse({"error": str(exc.detail) if hasattr(exc, "detail") else str(exc)}, status_code=exc.status_code)
+
+
+@app.exception_handler(Exception)
+async def unhandled_error_handler(request: Request, exc: Exception):
+    try:
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "page_title": "Server Error",
+                "status_code": 500,
+                "detail": "An unexpected error occurred.",
+                "path": str(request.url.path),
+            },
+            status_code=500,
+        )
+    except Exception:
+        return JSONResponse({"error": "internal server error"}, status_code=500)
 
